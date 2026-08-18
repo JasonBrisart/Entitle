@@ -174,9 +174,6 @@ isolated to the BSR2 adapter wiring layer.
 - Hash-chain tamper detection was confirmed directly: a manually corrupted
   historical record was correctly flagged by `verify_chain()`, with the
   exact broken record index reported.
-- Every shipped `.py` file was diffed byte-for-byte (size, line count, and
-  SHA-256) against a fresh export of the live repository with zero
-  mismatches.
 
 ### Notes
 - No changes were required to `entitle_core.py`, `entitle_records.py`,
