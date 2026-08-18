@@ -2,12 +2,28 @@
 Entitle Track
 
 Records deployments, forks, and provenance for Entitle-managed software.
+
+All records are written to a single append-only, tamper-evident store
+(entitle.records.RecordStore). This gives Entitle the deployment tracking,
+internal fork management, and provenance/ownership documentation described
+in the README, without any cloud service, activation server, or telemetry.
+
+Deployment records are additionally governed: a deployment is only recorded
+if a valid Entitle entitlement grants can_run, the entitlement has not been
+revoked, and the entitlement's deployment_limit is not already reached.
+
+Example:
+    python main.py track deploy --issuer JasonBrisart --subject ResearchLabA \
+        --product EntitleDemo --master-key "..." \
+        --entitlement entitlements/lab_a.entitle --host lab-a-node-01 \
+        --environment air-gapped --store records/entitle_records.log
 """
 
 import argparse
 import json
 
-from entitle_records import RecordStore
+from .constants import RECORD_TYPE_DEPLOYMENT, RECORD_TYPE_FORK, RECORD_TYPE_PROVENANCE
+from .records import RecordStore
 
 
 def count_deployments(store, product_id, subject_id, entitlement_id):
@@ -18,10 +34,16 @@ def count_deployments(store, product_id, subject_id, entitlement_id):
             and data.get("subject_id") == subject_id
             and data.get("entitlement_id") == entitlement_id
         )
-    return len(store.filter(record_type="deployment", predicate=matches))
+    return len(store.filter(record_type=RECORD_TYPE_DEPLOYMENT, predicate=matches))
 
 
 def register_deployment(store, entitlement, host, environment=None, notes=None):
+    """
+    Record a deployment if the entitlement authorizes it.
+
+    Returns a result dict describing whether the deployment was recorded,
+    the reason, and (when recorded) the resulting record.
+    """
     if not entitlement.allowed:
         return {
             "recorded": False,
@@ -39,7 +61,7 @@ def register_deployment(store, entitlement, host, environment=None, notes=None):
     subject_id = entitlement.payload.get("subject_id")
     entitlement_id = entitlement.payload.get("entitlement_id")
 
-    from entitle_revoke import is_revoked
+    from .revoke import is_revoked
     if is_revoked(store, entitlement_id):
         return {
             "recorded": False,
@@ -59,7 +81,7 @@ def register_deployment(store, entitlement, host, environment=None, notes=None):
         }
 
     record = store.append(
-        "deployment",
+        RECORD_TYPE_DEPLOYMENT,
         {
             "product_id": product_id,
             "subject_id": subject_id,
@@ -79,67 +101,127 @@ def register_deployment(store, entitlement, host, environment=None, notes=None):
     }
 
 
-def cmd_deploy(args):
-    from entitle_bsr_adapter import verify_protected_entitlement
+def deploy_from_file(
+    *,
+    issuer,
+    subject,
+    product,
+    master_key,
+    entitlement_path,
+    host,
+    store,
+    environment=None,
+    notes=None,
+):
+    """
+    Verify a protected entitlement file and, if it authorizes it, record a
+    governed deployment. Single source of truth used by both the CLI and
+    the GUI.
+    """
+    from .bsr_adapter import verify_protected_entitlement
+    master_key_bytes = master_key if isinstance(master_key, bytes) else master_key.encode("utf-8")
     entitlement = verify_protected_entitlement(
-        path=args.entitlement,
-        master_key=args.master_key.encode("utf-8"),
-        expected_product_id=args.product,
-        issuer_id=args.issuer,
-        subject_id=args.subject,
+        path=entitlement_path,
+        master_key=master_key_bytes,
+        expected_product_id=product,
+        issuer_id=issuer,
+        subject_id=subject,
     )
-    store = RecordStore(args.store)
-    outcome = register_deployment(
-        store=store,
+    record_store = RecordStore(store)
+    return register_deployment(
+        store=record_store,
         entitlement=entitlement,
+        host=host,
+        environment=environment,
+        notes=notes,
+    )
+
+
+def record_fork(*, store, product, source_version, fork_name, maintainer, environment=None, notes=None):
+    record_store = RecordStore(store)
+    return record_store.append(
+        RECORD_TYPE_FORK,
+        {
+            "product_id": product,
+            "source_version": source_version,
+            "fork_name": fork_name,
+            "maintainer": maintainer,
+            "environment": environment,
+            "notes": notes,
+        },
+    )
+
+
+def record_provenance(*, store, product, origin, version, custodian, previous_version=None, notes=None):
+    record_store = RecordStore(store)
+    return record_store.append(
+        RECORD_TYPE_PROVENANCE,
+        {
+            "product_id": product,
+            "origin": origin,
+            "version": version,
+            "previous_version": previous_version,
+            "custodian": custodian,
+            "notes": notes,
+        },
+    )
+
+
+def list_records(*, store, record_type=None):
+    record_store = RecordStore(store)
+    return record_store.filter(record_type=record_type)
+
+
+def _cmd_deploy(args):
+    outcome = deploy_from_file(
+        issuer=args.issuer,
+        subject=args.subject,
+        product=args.product,
+        master_key=args.master_key,
+        entitlement_path=args.entitlement,
         host=args.host,
+        store=args.store,
         environment=args.environment,
         notes=args.notes,
     )
     print(json.dumps(outcome, indent=2, ensure_ascii=False))
 
 
-def cmd_fork(args):
-    store = RecordStore(args.store)
-    record = store.append(
-        "fork",
-        {
-            "product_id": args.product,
-            "source_version": args.source_version,
-            "fork_name": args.fork_name,
-            "maintainer": args.maintainer,
-            "environment": args.environment,
-            "notes": args.notes,
-        },
+def _cmd_fork(args):
+    record = record_fork(
+        store=args.store,
+        product=args.product,
+        source_version=args.source_version,
+        fork_name=args.fork_name,
+        maintainer=args.maintainer,
+        environment=args.environment,
+        notes=args.notes,
     )
     print(json.dumps(record, indent=2, ensure_ascii=False))
 
 
-def cmd_provenance(args):
-    store = RecordStore(args.store)
-    record = store.append(
-        "provenance",
-        {
-            "product_id": args.product,
-            "origin": args.origin,
-            "version": args.version,
-            "previous_version": args.previous_version,
-            "custodian": args.custodian,
-            "notes": args.notes,
-        },
+def _cmd_provenance(args):
+    record = record_provenance(
+        store=args.store,
+        product=args.product,
+        origin=args.origin,
+        version=args.version,
+        custodian=args.custodian,
+        previous_version=args.previous_version,
+        notes=args.notes,
     )
     print(json.dumps(record, indent=2, ensure_ascii=False))
 
 
-def cmd_list(args):
-    store = RecordStore(args.store)
-    records = store.filter(record_type=args.type)
+def _cmd_list(args):
+    records = list_records(store=args.store, record_type=args.type)
     print(json.dumps(records, indent=2, ensure_ascii=False))
 
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="Record deployments, forks, and provenance for Entitle."
+        prog="track",
+        description="Record deployments, forks, and provenance for Entitle.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -153,7 +235,7 @@ def build_parser():
     deploy.add_argument("--environment", default=None)
     deploy.add_argument("--notes", default=None)
     deploy.add_argument("--store", required=True, help="Record store file path.")
-    deploy.set_defaults(func=cmd_deploy)
+    deploy.set_defaults(func=_cmd_deploy)
 
     fork = subparsers.add_parser("fork", help="Record an internal fork.")
     fork.add_argument("--product", required=True)
@@ -163,7 +245,7 @@ def build_parser():
     fork.add_argument("--environment", default=None)
     fork.add_argument("--notes", default=None)
     fork.add_argument("--store", required=True, help="Record store file path.")
-    fork.set_defaults(func=cmd_fork)
+    fork.set_defaults(func=_cmd_fork)
 
     provenance = subparsers.add_parser("provenance", help="Record provenance/ownership.")
     provenance.add_argument("--product", required=True)
@@ -173,7 +255,7 @@ def build_parser():
     provenance.add_argument("--custodian", required=True)
     provenance.add_argument("--notes", default=None)
     provenance.add_argument("--store", required=True, help="Record store file path.")
-    provenance.set_defaults(func=cmd_provenance)
+    provenance.set_defaults(func=_cmd_provenance)
 
     listing = subparsers.add_parser("list", help="List records of a type.")
     listing.add_argument(
@@ -182,16 +264,13 @@ def build_parser():
         help="deployment, fork, or provenance. Omit for all records.",
     )
     listing.add_argument("--store", required=True, help="Record store file path.")
-    listing.set_defaults(func=cmd_list)
+    listing.set_defaults(func=_cmd_list)
 
     return parser
 
 
-def main():
+def main(argv=None):
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args.func(args)
-
-
-if __name__ == "__main__":
-    main()
+    

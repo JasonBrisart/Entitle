@@ -1,7 +1,7 @@
 """
 Entitle BSR Adapter
 
-Connects Entitle to BrisartSecurityResearch.
+Connects Entitle to BrisartSecurityResearch (BSR2).
 
 Expected behavior:
     - Entitle creates plain JSON entitlement payloads.
@@ -13,40 +13,34 @@ Important:
     BrisartSecurityResearch is currently an experimental research implementation.
     Use this adapter for controlled, offline, internal, and research-oriented
     environments unless/until BSR receives independent review.
+
+BSR2 itself lives in the sibling `bsr/` directory and is used completely
+unmodified. Its own modules use flat, top-level imports
+(e.g. `from brisart_security_primitives import ...`), so the `bsr/`
+directory itself must be present on `sys.path` before this module is
+imported. `entitle.bootstrap.ensure_bsr_on_path()` handles that; every
+Entitle entry point (CLI, GUI, examples) calls it before importing anything
+from this module.
 """
 
 import json
 from pathlib import Path
 
-from entitle_core import (
+from .core import (
     canonical_json,
     evaluate_payload,
     load_entitlement_payload,
 )
 
-"""
-Adjust these imports if your local BSR function/class names differ.
-
-Recommended Entitle repository structure:
-
-Entitle/
-├── entitle_bsr_adapter.py
-└── bsr/
-    ├── brisart_security_drbg.py
-    └── brisart_security_envelope.py
-"""
 try:
-    from bsr.brisart_security_drbg import BrisartDRBG as BrisartSecurityDRBG
-    from bsr.brisart_security_envelope import encrypt as encrypt_envelope, decrypt as decrypt_envelope
-except ImportError:
-    try:
-        from brisart_security_drbg import BrisartDRBG as BrisartSecurityDRBG
-        from brisart_security_envelope import encrypt as encrypt_envelope, decrypt as decrypt_envelope
-    except ImportError as exc:
-        raise ImportError(
-            "Could not import BrisartSecurityResearch modules. "
-            "Place BSR files in Entitle/bsr/ or beside Entitle source files."
-        ) from exc
+    from brisart_security_drbg import BrisartDRBG as BrisartSecurityDRBG
+    from brisart_security_envelope import encrypt as encrypt_envelope, decrypt as decrypt_envelope
+except ImportError as exc:
+    raise ImportError(
+        "Could not import BrisartSecurityResearch (BSR2) modules. "
+        "Make sure the 'bsr/' directory has been added to sys.path before "
+        "importing entitle.bsr_adapter (see entitle.bootstrap.ensure_bsr_on_path)."
+    ) from exc
 
 
 class EntitleBSRError(Exception):
@@ -187,7 +181,7 @@ def verify_protected_entitlement(
         subject_id=subject_id,
     )
     if payload is None:
-        from entitle_core import EntitlementResult
+        from .core import EntitlementResult
         return EntitlementResult.denied_result("bsr_verification_failed")
     return evaluate_payload(
         payload,

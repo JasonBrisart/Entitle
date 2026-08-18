@@ -2,13 +2,21 @@
 Entitle Report
 
 Audit and reporting for the Entitle record store.
+
+Generates a governance report over deployments, forks, and provenance
+records, and verifies the tamper-evident hash chain so you can confirm the
+log has not been edited, truncated, or reordered.
+
+Example:
+    python main.py report --store records/entitle_records.log
 """
 
 import argparse
 import json
 from pathlib import Path
 
-from entitle_records import RecordStore
+from .constants import RECORD_TYPE_DEPLOYMENT
+from .records import RecordStore
 
 
 def build_report(store):
@@ -21,7 +29,7 @@ def build_report(store):
         counts[record_type] = counts.get(record_type, 0) + 1
 
     deployments_by_product = {}
-    for record in store.filter(record_type="deployment"):
+    for record in store.filter(record_type=RECORD_TYPE_DEPLOYMENT):
         product_id = record.get("data", {}).get("product_id", "unknown")
         deployments_by_product[product_id] = (
             deployments_by_product.get(product_id, 0) + 1
@@ -39,6 +47,11 @@ def build_report(store):
         "last_record_at": last_created,
         "chain": chain.to_dict(),
     }
+
+
+def build_report_for_path(store_path):
+    """Convenience wrapper used by both the CLI and the GUI."""
+    return build_report(RecordStore(store_path))
 
 
 def format_text(report):
@@ -78,9 +91,10 @@ def format_text(report):
     return "\n".join(lines)
 
 
-def main():
+def build_parser():
     parser = argparse.ArgumentParser(
-        description="Audit and report on the Entitle record store."
+        prog="report",
+        description="Audit and report on the Entitle record store.",
     )
     parser.add_argument("--store", required=True, help="Record store file path.")
     parser.add_argument(
@@ -94,10 +108,14 @@ def main():
         default=None,
         help="Optional file to write the report to. Prints to screen if omitted.",
     )
-    args = parser.parse_args()
+    return parser
 
-    store = RecordStore(args.store)
-    report = build_report(store)
+
+def main(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    report = build_report_for_path(args.store)
 
     if args.format == "json":
         rendered = json.dumps(report, indent=2, ensure_ascii=False)
@@ -113,7 +131,4 @@ def main():
         print(f"Report written to {path}")
     else:
         print(rendered)
-
-
-if __name__ == "__main__":
-    main()
+    return 0

@@ -23,7 +23,7 @@ import json
 import uuid
 from pathlib import Path
 
-from entitle_core import canonical_json
+from .core import canonical_json
 
 GENESIS_HASH = "0" * 64
 

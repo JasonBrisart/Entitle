@@ -5,7 +5,7 @@ Offline software rights checking for entitlement records.
 
 This module does not perform encryption directly.
 It expects protected entitlement containers to be opened through
-entitle_bsr_adapter.py.
+entitle.bsr_adapter.
 """
 
 import datetime

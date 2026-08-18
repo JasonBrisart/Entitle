@@ -10,15 +10,31 @@ Behavior:
     - No cloud activation.
     - No telemetry.
     - No online license server.
+
+Run this from anywhere:
+    python examples/protected_app_example.py
 """
 
-from entitle_core import EntitlementDenied
-from entitle_bsr_adapter import verify_protected_entitlement
+import sys
+from pathlib import Path
+
+# Allow this script to be run directly (e.g. `python examples/protected_app_example.py`)
+# regardless of the current working directory, by putting the repository root
+# on sys.path so `entitle` (and, via entitle.bootstrap, `bsr/`) can be found.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from entitle.bootstrap import ensure_bsr_on_path
+ensure_bsr_on_path()
+
+from entitle.core import EntitlementDenied
+from entitle.bsr_adapter import verify_protected_entitlement
 
 ISSUER_ID = "JasonBrisart"
 SUBJECT_ID = "ResearchLabA"
 PRODUCT_ID = "EntitleDemo"
-ENTITLEMENT_FILE = "entitlements/lab_a.entitle"
+ENTITLEMENT_FILE = str(_REPO_ROOT / "entitlements" / "lab_a.entitle")
 
 """
 For this demo, the master key is hardcoded.
@@ -80,6 +96,19 @@ def redistribution_feature(entitlement):
 
 
 def main():
+    if not Path(ENTITLEMENT_FILE).exists():
+        print(f"No entitlement file found at: {ENTITLEMENT_FILE}")
+        print("Issue one first, for example:")
+        print()
+        print("  python main.py issue \\")
+        print(f"      --issuer {ISSUER_ID} --subject {SUBJECT_ID} --product {PRODUCT_ID} \\")
+        print("      --entitlement-id lab-a-demo-001 \\")
+        print("      --master-key \"change-this-master-key-change-this-master-key\" \\")
+        print("      --drbg-seed \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" \\")
+        print("      --drbg-personalization \"EntitleDemoPersonalization\" \\")
+        print("      --modify --fork --deployment-limit 3 \\")
+        print(f"      --output {ENTITLEMENT_FILE}")
+        return
     entitlement = load_entitlement()
     print("Entitlement result:")
     print(entitlement.to_dict())
