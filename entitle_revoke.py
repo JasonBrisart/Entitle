@@ -1,36 +1,7 @@
 """
 Entitle Revoke
+
 Offline revocation for Entitle entitlements.
-
-Revocation is recorded as an append-only, tamper-evident entry in the same
-local record store used by deployment/fork/provenance tracking. Because the
-store is hash-chained, a revocation cannot be silently removed or reordered
-without breaking the chain.
-
-An entitlement is considered revoked if the store contains a "revocation"
-record for its entitlement_id that is not followed by a later "reinstatement"
-record for the same entitlement_id. This lets you both revoke and, if needed,
-reinstate, while preserving the full history.
-
-Examples:
-    Revoke:
-        python entitle_revoke.py revoke ^
-            --entitlement-id lab-a-demo-001 ^
-            --issuer JasonBrisart ^
-            --product EntitleDemo ^
-            --reason "key compromise" ^
-            --store records/entitle_records.log
-
-    Reinstate:
-        python entitle_revoke.py reinstate ^
-            --entitlement-id lab-a-demo-001 ^
-            --reason "cleared" ^
-            --store records/entitle_records.log
-
-    Check status:
-        python entitle_revoke.py check ^
-            --entitlement-id lab-a-demo-001 ^
-            --store records/entitle_records.log
 """
 
 import argparse
@@ -40,12 +11,6 @@ from entitle_records import RecordStore
 
 
 def revocation_status(store, entitlement_id):
-    """
-    Return the effective revocation status for an entitlement_id.
-
-    Walks the record log in order. The most recent revocation or
-    reinstatement record for this entitlement_id wins.
-    """
     revoked = False
     last_record = None
     for record in store.read_all():

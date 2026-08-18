@@ -1,46 +1,7 @@
 """
 Entitle Track
+
 Records deployments, forks, and provenance for Entitle-managed software.
-
-All records are written to a single append-only, tamper-evident store
-(entitle_records.RecordStore). This gives Entitle the deployment tracking,
-internal fork management, and provenance/ownership documentation described
-in the README, without any cloud service, activation server, or telemetry.
-
-Deployment records are additionally governed: a deployment is only recorded
-if a valid Entitle entitlement grants can_run, the entitlement has not been
-revoked, and the entitlement's deployment_limit is not already reached.
-
-Examples:
-    Record a governed deployment:
-        python entitle_track.py deploy ^
-            --issuer JasonBrisart ^
-            --subject ResearchLabA ^
-            --product EntitleDemo ^
-            --master-key "change-this-master-key-change-this-master-key" ^
-            --entitlement entitlements/lab_a.entitle ^
-            --host lab-a-node-01 ^
-            --environment air-gapped ^
-            --store records/entitle_records.log
-
-    Record an internal fork:
-        python entitle_track.py fork ^
-            --product EntitleDemo ^
-            --source-version 1.4.0 ^
-            --fork-name lab-a-custom ^
-            --maintainer ResearchLabA ^
-            --store records/entitle_records.log
-
-    Record provenance / ownership:
-        python entitle_track.py provenance ^
-            --product EntitleDemo ^
-            --origin JasonBrisart ^
-            --version 1.4.0 ^
-            --custodian ResearchLabA ^
-            --store records/entitle_records.log
-
-    List records of a given type:
-        python entitle_track.py list --type deployment --store records/entitle_records.log
 """
 
 import argparse
@@ -57,24 +18,16 @@ def count_deployments(store, product_id, subject_id, entitlement_id):
             and data.get("subject_id") == subject_id
             and data.get("entitlement_id") == entitlement_id
         )
-
     return len(store.filter(record_type="deployment", predicate=matches))
 
 
 def register_deployment(store, entitlement, host, environment=None, notes=None):
-    """
-    Record a deployment if the entitlement authorizes it.
-
-    Returns a result dict describing whether the deployment was recorded,
-    the reason, and (when recorded) the resulting record.
-    """
     if not entitlement.allowed:
         return {
             "recorded": False,
             "reason": f"entitlement_denied:{entitlement.reason}",
             "record": None,
         }
-
     if not entitlement.has_right("can_run"):
         return {
             "recorded": False,
@@ -87,7 +40,6 @@ def register_deployment(store, entitlement, host, environment=None, notes=None):
     entitlement_id = entitlement.payload.get("entitlement_id")
 
     from entitle_revoke import is_revoked
-
     if is_revoked(store, entitlement_id):
         return {
             "recorded": False,
@@ -97,7 +49,6 @@ def register_deployment(store, entitlement, host, environment=None, notes=None):
 
     limit = entitlement.get_limit("deployment_limit", default=1)
     used = count_deployments(store, product_id, subject_id, entitlement_id)
-
     if limit is not None and used >= limit:
         return {
             "recorded": False,
@@ -130,7 +81,6 @@ def register_deployment(store, entitlement, host, environment=None, notes=None):
 
 def cmd_deploy(args):
     from entitle_bsr_adapter import verify_protected_entitlement
-
     entitlement = verify_protected_entitlement(
         path=args.entitlement,
         master_key=args.master_key.encode("utf-8"),

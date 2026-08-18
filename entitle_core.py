@@ -27,15 +27,11 @@ def utc_now():
 def parse_iso_datetime(value):
     if not value:
         return None
-
     if value.endswith("Z"):
         value = value[:-1] + "+00:00"
-
     parsed = datetime.datetime.fromisoformat(value)
-
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=datetime.timezone.utc)
-
     return parsed
 
 
@@ -53,7 +49,6 @@ def load_entitlement_payload(raw_bytes):
         payload = json.loads(raw_bytes.decode("utf-8"))
     except Exception as exc:
         raise EntitleError("Invalid entitlement payload.") from exc
-
     return payload
 
 
@@ -102,7 +97,6 @@ class EntitlementResult:
     def has_right(self, right_name):
         if not self.allowed:
             return False
-
         return bool(self.rights.get(right_name, False))
 
     def get_limit(self, limit_name, default=None):
@@ -111,10 +105,8 @@ class EntitlementResult:
     def require_right(self, right_name):
         if not self.allowed:
             raise EntitlementDenied(f"Entitlement denied: {self.reason}")
-
         if not self.has_right(right_name):
             raise EntitlementDenied(f"Required right not granted: {right_name}")
-
         return True
 
     def to_dict(self):
@@ -132,20 +124,15 @@ class EntitlementResult:
 def evaluate_payload(payload, expected_product_id=None):
     if payload.get("format") != "entitle.entitlement.v1":
         return EntitlementResult.denied_result("unsupported_entitlement_format", payload)
-
     if expected_product_id is not None:
         if payload.get("product_id") != expected_product_id:
             return EntitlementResult.denied_result("wrong_product", payload)
-
     expires_at = payload.get("expires_at")
-
     if expires_at:
         try:
             expiration = parse_iso_datetime(expires_at)
         except Exception:
             return EntitlementResult.denied_result("invalid_expiration_timestamp", payload)
-
         if utc_now() > expiration:
             return EntitlementResult.denied_result("entitlement_expired", payload)
-
     return EntitlementResult.allowed_result(payload)

@@ -15,11 +15,9 @@ Behavior:
 from entitle_core import EntitlementDenied
 from entitle_bsr_adapter import verify_protected_entitlement
 
-
 ISSUER_ID = "JasonBrisart"
 SUBJECT_ID = "ResearchLabA"
 PRODUCT_ID = "EntitleDemo"
-
 ENTITLEMENT_FILE = "entitlements/lab_a.entitle"
 
 """
@@ -83,20 +81,16 @@ def redistribution_feature(entitlement):
 
 def main():
     entitlement = load_entitlement()
-
     print("Entitlement result:")
     print(entitlement.to_dict())
     print()
-
     base_program()
     print()
-
     if not entitlement.allowed:
         print("Entitlement verification failed.")
         print(f"Reason: {entitlement.reason}")
         print("Governed features remain locked.")
         return
-
     guarded_features = [
         ("Enterprise", enterprise_feature),
         ("Modification", modify_feature),
@@ -104,7 +98,6 @@ def main():
         ("Source Export", source_export_feature),
         ("Redistribution", redistribution_feature),
     ]
-
     for name, function in guarded_features:
         try:
             function(entitlement)

@@ -24,7 +24,6 @@ from entitle_core import (
     load_entitlement_payload,
 )
 
-
 """
 Adjust these imports if your local BSR function/class names differ.
 
@@ -36,14 +35,13 @@ Entitle/
     ├── brisart_security_drbg.py
     └── brisart_security_envelope.py
 """
-
 try:
-    from bsr.brisart_security_drbg import BrisartSecurityDRBG
-    from bsr.brisart_security_envelope import encrypt_envelope, decrypt_envelope
+    from bsr.brisart_security_drbg import BrisartDRBG as BrisartSecurityDRBG
+    from bsr.brisart_security_envelope import encrypt as encrypt_envelope, decrypt as decrypt_envelope
 except ImportError:
     try:
-        from brisart_security_drbg import BrisartSecurityDRBG
-        from brisart_security_envelope import encrypt_envelope, decrypt_envelope
+        from brisart_security_drbg import BrisartDRBG as BrisartSecurityDRBG
+        from brisart_security_envelope import encrypt as encrypt_envelope, decrypt as decrypt_envelope
     except ImportError as exc:
         raise ImportError(
             "Could not import BrisartSecurityResearch modules. "
@@ -69,13 +67,12 @@ def make_context(product_id, issuer_id, subject_id):
         "issuer_id": issuer_id,
         "subject_id": subject_id,
     }
-
     return json.dumps(
         context,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
-    ).encode("utf-8")
+    )
 
 
 def make_drbg(seed, personalization):
@@ -103,28 +100,24 @@ def protect_entitlement_payload(
     Convert an Entitle payload into an authenticated BSR envelope.
     """
     plaintext = canonical_json(payload)
-
     context = make_context(
         product_id=payload["product_id"],
         issuer_id=payload["issuer_id"],
         subject_id=payload["subject_id"],
     )
-
     drbg = make_drbg(
         seed=drbg_seed,
         personalization=drbg_personalization,
     )
-
     try:
         envelope = encrypt_envelope(
             master_key=master_key,
             plaintext=plaintext,
             context=context,
-            drbg=drbg,
+            rng=drbg,
         )
     except Exception as exc:
         raise EntitleBSRError("BSR envelope encryption failed.") from exc
-
     return envelope
 
 
@@ -148,7 +141,6 @@ def open_entitlement_envelope(
         issuer_id=issuer_id,
         subject_id=subject_id,
     )
-
     try:
         plaintext = decrypt_envelope(
             master_key=master_key,
@@ -157,19 +149,16 @@ def open_entitlement_envelope(
         )
     except Exception:
         return None
-
     try:
         payload = load_entitlement_payload(plaintext)
     except Exception:
         return None
-
     return payload
 
 
 def save_protected_entitlement(envelope, path):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-
     with path.open("w", encoding="utf-8") as handle:
         json.dump(envelope, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
@@ -177,7 +166,6 @@ def save_protected_entitlement(envelope, path):
 
 def load_protected_entitlement(path):
     path = Path(path)
-
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
 
@@ -191,7 +179,6 @@ def verify_protected_entitlement(
     subject_id,
 ):
     envelope = load_protected_entitlement(path)
-
     payload = open_entitlement_envelope(
         envelope=envelope,
         master_key=master_key,
@@ -199,11 +186,9 @@ def verify_protected_entitlement(
         issuer_id=issuer_id,
         subject_id=subject_id,
     )
-
     if payload is None:
         from entitle_core import EntitlementResult
         return EntitlementResult.denied_result("bsr_verification_failed")
-
     return evaluate_payload(
         payload,
         expected_product_id=expected_product_id,

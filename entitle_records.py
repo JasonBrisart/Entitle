@@ -1,5 +1,6 @@
 """
 Entitle Records
+
 Append-only, tamper-evident local record log for Entitle.
 
 This module is the shared record store used by Entitle's deployment

@@ -1,20 +1,7 @@
 """
 Entitle Report
+
 Audit and reporting for the Entitle record store.
-
-Generates a governance report over deployments, forks, and provenance
-records, and verifies the tamper-evident hash chain so you can confirm the
-log has not been edited, truncated, or reordered.
-
-Examples:
-    Text report to screen:
-        python entitle_report.py --store records/entitle_records.log
-
-    JSON report to a file:
-        python entitle_report.py ^
-            --store records/entitle_records.log ^
-            --format json ^
-            --output reports/entitle_audit.json
 """
 
 import argparse
@@ -63,7 +50,6 @@ def format_text(report):
     lines.append(f"First record: {report['first_record_at']}")
     lines.append(f"Last record:  {report['last_record_at']}")
     lines.append("")
-
     lines.append("Records by type")
     lines.append("-" * 20)
     if report["counts_by_type"]:
@@ -72,7 +58,6 @@ def format_text(report):
     else:
         lines.append("(none)")
     lines.append("")
-
     lines.append("Deployments by product")
     lines.append("-" * 20)
     if report["deployments_by_product"]:
@@ -81,7 +66,6 @@ def format_text(report):
     else:
         lines.append("(none)")
     lines.append("")
-
     chain = report["chain"]
     lines.append("Chain integrity")
     lines.append("-" * 20)
