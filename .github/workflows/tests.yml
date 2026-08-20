@@ -1,0 +1,77 @@
+name: Entitle Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Compile Entitle, bsr, and test files
+        run: |
+          python -m py_compile \
+            main.py \
+            entitle/__init__.py \
+            entitle/bootstrap.py \
+            entitle/bsr_adapter.py \
+            entitle/constants.py \
+            entitle/core.py \
+            entitle/issue.py \
+            entitle/records.py \
+            entitle/report.py \
+            entitle/revoke.py \
+            entitle/track.py \
+            entitle/verify.py \
+            bsr/brisart_security_primitives.py \
+            bsr/brisart_security_drbg.py \
+            bsr/brisart_security_entropy.py \
+            bsr/brisart_security_envelope.py
+
+      - name: Run Entitle test suite
+        run: python -m pytest tests/ -v
+
+      - name: Run full CLI lifecycle smoke test
+        run: |
+          python main.py issue \
+            --issuer JasonBrisart --subject ResearchLabA --product EntitleDemo \
+            --entitlement-id ci-smoke-001 \
+            --master-key "ci-smoke-test-master-key-not-for-production-use" \
+            --drbg-seed "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
+            --drbg-personalization "CISmokeTestPersonalization" \
+            --deployment-limit 2 \
+            --output entitlements/ci_smoke.entitle
+
+          python main.py verify \
+            --issuer JasonBrisart --subject ResearchLabA --product EntitleDemo \
+            --master-key "ci-smoke-test-master-key-not-for-production-use" \
+            --file entitlements/ci_smoke.entitle
+
+          python main.py track deploy \
+            --issuer JasonBrisart --subject ResearchLabA --product EntitleDemo \
+            --master-key "ci-smoke-test-master-key-not-for-production-use" \
+            --entitlement entitlements/ci_smoke.entitle \
+            --host ci-runner --environment ci \
+            --store records/ci_smoke_records.log
+
+          python main.py revoke revoke \
+            --entitlement-id ci-smoke-001 --reason "ci smoke test cleanup" \
+            --store records/ci_smoke_records.log
+
+          python main.py report --store records/ci_smoke_records.log
