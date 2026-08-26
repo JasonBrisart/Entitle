@@ -3,6 +3,20 @@ All notable changes to Entitle are documented in this file.
 Entitle is pure Python with no external dependencies and is designed for
 local-first, offline, and air-gapped environments.
 
+---
+
+## [0.3.1.1] - 2026-08-26
+
+### Changed
+- Removed the unused `from pathlib import Path` import from `gui/tabs/issue_tab.py`.
+
+### Notes
+- This is a cosmetic code cleanup release only.
+- No functional behavior, entitlement processing, licensing logic, CLI commands, GUI workflows, file formats, or outputs were changed.
+- Improves code cleanliness and reduces dead imports in the Issue tab implementation.
+
+---
+
 ## [0.3.1] - 2026-08-18
 This release is a follow-up architecture cleanup pass on top of 0.3.0's
 package restructure. No governance logic, record-store semantics, or
@@ -54,6 +68,8 @@ entitlement behavior changed.
   report). All 11 assertions passed against the real backend. As before,
   actual on-screen rendering should be confirmed on a machine with a
   working Tkinter/Tk installation.
+
+---
 
 ## [0.3.0] - 2026-08-18
 This release restructures Entitle from a flat collection of scripts into a
@@ -134,6 +150,8 @@ usability release, not a behavior release.
   store path was introduced, preserving the existing "operator always
   specifies `--store` explicitly" design principle.
 
+---
+
 ## [0.2.1] - 2026-08-18
 This release fixes integration bugs between `entitle_bsr_adapter.py` and the
 real BrisartSecurityResearch (BSR2) module that prevented `entitle_issue.py`
@@ -183,6 +201,8 @@ isolated to the BSR2 adapter wiring layer.
   BSR2 remains an independent, experimental research dependency and should
   continue to be treated as controlled-environment protection unless
   independently reviewed.
+
+---
 
 ## [0.2.0] - 2026-08-04
 This release brings the implementation in line with the README by adding the
