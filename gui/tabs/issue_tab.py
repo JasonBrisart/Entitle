@@ -6,7 +6,6 @@ entitle.issue.issue_entitlement(...) directly -- the exact same function the
 `python main.py issue ...` CLI command uses.
 """
 
-from pathlib import Path
 
 from tkinter import ttk
 
