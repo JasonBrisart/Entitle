@@ -13,4 +13,4 @@ BrisartSecurityResearch (BSR2) research modules through
 is never modified by this package.
 """
 
-__version__ = "0.3.1.1"
+__version__ = "0.3.2"
