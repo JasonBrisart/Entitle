@@ -27,17 +27,17 @@ class TestDefaultPaths:
         assert isinstance(paths.default_new_entitlement_file(), str)
 
     def test_importing_paths_does_not_create_directories(self):
-        # paths must be pure computation; it must not create data dirs on import.
-        # (We only assert the module exposes the dirs as Path objects.)
         assert isinstance(paths.RECORDS_DIR, Path)
         assert isinstance(paths.ENTITLEMENTS_DIR, Path)
         assert isinstance(paths.REPORTS_DIR, Path)
 
 
 class TestVersion:
-    def test_version_is_importable_and_matches_package(self):
-        from version import __version__ as root_version
-        from entitle import __version__ as pkg_version
-        assert root_version == pkg_version
-        assert isinstance(root_version, str)
-        assert root_version.count(".") >= 2
+    def test_version_is_a_well_formed_string(self):
+        # entitle/__init__.py was removed (0.4.2, PEP 420 namespace packages),
+        # so the version is read directly from the repository-root version.py
+        # rather than via `from entitle import __version__`. main.py, the GUI,
+        # and this test all import it the same way.
+        from version import __version__
+        assert isinstance(__version__, str)
+        assert __version__.count(".") >= 2

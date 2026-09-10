@@ -5,6 +5,84 @@ local-first, offline, and air-gapped environments.
 
 ---
 
+## [0.4.1] - 2026-09-10
+
+An architecture-consistency release. Every `__init__.py` file in the project
+has been removed; `entitle`, `entitle/tracking`, `gui`, and `gui/tabs` are now
+PEP 420 implicit namespace packages, matching the convention already used
+elsewhere in the Brisart ecosystem. No entitlement format, BSR2 protection
+logic, or CLI/GUI behavior changed. If you only run `main.py`
+`issue`/`verify`/`track`/`revoke`/`report`/`gui`, nothing about how you invoke
+Entitle changes in this release.
+
+### Removed
+
+- **`entitle/__init__.py`** — previously re-exported `__version__` (itself
+  read from the root `version.py`) and inserted the repository root onto
+  `sys.path`. Every real entry point (`main.py`, `gui/app.py`,
+  `examples/protected_app_example.py`, `tests/conftest.py`) already performed
+  its own `sys.path` setup independently, so the file's only functional
+  purpose had become exposing `entitle.__version__` — which nothing besides
+  one test relied on. Removed with no functional loss.
+- **`entitle/tracking/__init__.py`** — previously re-exported
+  `count_deployments`, `register_deployment`, `deploy_from_file`,
+  `record_fork`, `record_provenance`, and `list_records` from the tracking
+  submodules. `entitle/tracking/cli.py` already imported directly from the
+  submodules (`.deploy`, `.fork`, `.provenance`, `.query`); only the GUI's
+  Deploy and Fork/Provenance tabs, and two test files, used the package-level
+  re-export.
+- **`gui/__init__.py`** and **`gui/tabs/__init__.py`** — both contained only a
+  module docstring with no functional code; nothing imported from either at
+  the package level.
+
+### Changed
+
+- **`gui/tabs/deploy_tab.py`** now imports `deploy_from_file` from
+  `entitle.tracking.deploy` directly, instead of from the removed
+  `entitle.tracking` package-level re-export.
+- **`gui/tabs/fork_provenance_tab.py`** now imports `record_fork` from
+  `entitle.tracking.fork` and `record_provenance` from
+  `entitle.tracking.provenance` directly, instead of from `entitle.tracking`.
+- **`tests/test_report.py`** and **`tests/test_tracking.py`** updated the same
+  way: `record_fork`, `register_deployment`, `record_provenance`, and
+  `list_records` are now imported from their owning submodules
+  (`entitle.tracking.deploy`, `entitle.tracking.fork`,
+  `entitle.tracking.provenance`, `entitle.tracking.query`).
+- **`tests/test_paths.py`**'s version-parity test no longer does
+  `from entitle import __version__`, since that only worked through the now-
+  removed `entitle/__init__.py`. It now confirms the root `version.py`'s
+  `__version__` is a well-formed string directly — `main.py`, the GUI, and
+  this test all already read the version the same way (`from version import
+  __version__`), so there was never a second version value to stay in sync
+  with.
+
+### Verified
+
+- Confirmed by direct interpreter inspection that `entitle`, `entitle.tracking`,
+  `gui`, and `gui.tabs` are genuine PEP 420 namespace packages after removal
+  (`__file__` is `None`; `__path__` correctly resolves to each directory).
+- Full test suite re-run with zero `__init__.py` files anywhere in the tree:
+  82 tests pass, unchanged from 0.4.1.
+- Full CLI lifecycle (issue, verify, track deploy, revoke, report) re-run
+  end-to-end through `main.py` with identical results to 0.4.1.
+- `tests/test_bsr_integrity.py` re-confirmed: the four vendored BSR2 files are
+  untouched by this change and still match their pinned SHA-256 values.
+
+### Notes
+
+- This release contains no changes to the entitlement payload format, the
+  BSR2 envelope protocol, the tamper-evident record format, or any CLI/GUI
+  command or workflow behavior.
+- If you have code that does `from entitle import __version__` or
+  `from entitle.tracking import <function>` directly, update it to
+  `from version import __version__` and
+  `from entitle.tracking.<deploy|fork|provenance|query> import <function>`
+  respectively. All function signatures and behavior are unchanged.
+- No new external dependencies were introduced; the project remains pure
+  Python, standard-library only.
+
+---
+
 ## [0.4.0] - 2026-09-10
 
 An architecture and consistency release, not a behavior release. This entry

@@ -13,4 +13,4 @@ read cheaply by tooling (including offline/air-gapped release scripts) without
 importing the whole package.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
