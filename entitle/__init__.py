@@ -27,3 +27,4 @@ if str(_REPO_ROOT) not in sys.path:
 from version import __version__  # noqa: E402  (import after sys.path setup)
 
 __all__ = ["__version__"]
+
