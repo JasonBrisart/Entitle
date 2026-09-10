@@ -3,20 +3,27 @@ Entitle Records
 
 Append-only, tamper-evident local record log for Entitle.
 
-This module is the shared record store used by Entitle's deployment
-tracking, fork management, provenance records, and audit reporting.
+This module is the shared record store used by Entitle's deployment tracking,
+fork management, provenance records, and audit reporting.
 
 Design goals:
     - Local-first: records live in a plain file you control.
     - Offline: no network, no services, no telemetry.
     - Auditable: every entry is human-readable JSON on its own line.
-    - Tamper-evident: entries are linked in a SHA-256 hash chain, so any
-      edit, deletion, or reordering of earlier records can be detected.
+    - Tamper-evident: entries are linked in a SHA-256 hash chain, so any edit,
+      deletion, or reordering of earlier records can be detected.
 
-The store is intentionally append-only. Records are never rewritten in
-place; corrections are made by appending new records.
+The store is intentionally append-only. Records are never rewritten in place;
+corrections are made by appending new records.
+
+Record schema versioning:
+    Each record carries an explicit ``format`` marker (``entitle.record.v1``).
+    The entitlement *payload* already carried its own format marker; from 0.4.0
+    the *record* entries do too, so the on-disk record schema can be evolved in
+    the future while still recognizing existing logs. The marker is part of the
+    hashed region of each record, so it is covered by the tamper-evident chain
+    like every other field.
 """
-
 import datetime
 import hashlib
 import json
@@ -26,6 +33,7 @@ from pathlib import Path
 from .core import canonical_json
 
 GENESIS_HASH = "0" * 64
+RECORD_FORMAT = "entitle.record.v1"
 
 
 def utc_now_iso():
@@ -89,6 +97,7 @@ class RecordStore:
 
     def append(self, record_type, data):
         record = {
+            "format": RECORD_FORMAT,
             "record_id": uuid.uuid4().hex,
             "record_type": record_type,
             "created_at": utc_now_iso(),

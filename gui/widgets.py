@@ -3,12 +3,10 @@ Entitle GUI Widgets
 
 Shared Tkinter form-building helpers used by every tab in gui/tabs/.
 
-Keeping this in one place means each tab module only has to describe *what*
-fields it needs, not *how* to lay out a label/entry/checkbox row — so adding
-a new tab is a matter of writing a small, focused file rather than copying
-layout boilerplate.
+Keeping this in one place means each tab module only has to describe *what* fields
+it needs, not *how* to lay out a label/entry/checkbox row — so adding a new tab is
+a matter of writing a small, focused file rather than copying layout boilerplate.
 """
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 

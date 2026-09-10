@@ -1,16 +1,12 @@
 """Fresh operating-system entropy for BSR2 envelope diversification.
-
 The custom BSR2 DRBG is deterministic. This module adds an independent,
 non-deterministic input at each encryption so a recreated DRBG state does not,
 by itself, recreate the envelope salt and nonce.
-
 This module uses only the Python standard library, but the entropy is supplied
 by the operating system through secrets.token_bytes. It is intentionally not a
 custom entropy source.
 """
-
 from __future__ import annotations
-
 import secrets
 import threading
 
@@ -25,7 +21,6 @@ _PREVIOUS_SAMPLE: bytes | None = None
 
 def system_entropy(length: int) -> bytes:
     """Return fresh operating-system entropy and perform basic health checks.
-
     The duplicate-sample check is only a catastrophic-failure detector. It is
     not an entropy estimate and does not validate the operating-system source.
     """

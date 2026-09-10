@@ -14,18 +14,15 @@ Important:
     Use this adapter for controlled, offline, internal, and research-oriented
     environments unless/until BSR receives independent review.
 
-BSR2 itself lives in the sibling `bsr/` directory and is used completely
+BSR2 itself lives in the sibling ``vendor/`` directory and is used completely
 unmodified. Its own modules use flat, top-level imports
-(e.g. `from brisart_security_primitives import ...`), so the `bsr/`
-directory itself must be present on `sys.path` before this module is
-imported. `entitle.bootstrap.ensure_bsr_on_path()` handles that; every
-Entitle entry point (CLI, GUI, examples) calls it before importing anything
-from this module.
+(e.g. ``from brisart_security_primitives import ...``), so the ``vendor/``
+directory itself must be present on ``sys.path`` before this module is imported.
+``entitle.bootstrap.ensure_bsr_on_path()`` handles that; every Entitle entry
+point (CLI, GUI, examples) calls it before importing anything from this module.
 """
-
 import json
 from pathlib import Path
-
 from .core import (
     canonical_json,
     evaluate_payload,
@@ -38,9 +35,11 @@ try:
 except ImportError as exc:
     raise ImportError(
         "Could not import BrisartSecurityResearch (BSR2) modules. "
-        "Make sure the 'bsr/' directory has been added to sys.path before "
+        "Make sure the 'vendor/' directory has been added to sys.path before "
         "importing entitle.bsr_adapter (see entitle.bootstrap.ensure_bsr_on_path)."
     ) from exc
+
+ENTITLEMENT_CONTEXT_FORMAT = "entitle.entitlement.v1"
 
 
 class EntitleBSRError(Exception):
@@ -56,7 +55,7 @@ def make_context(product_id, issuer_id, subject_id):
     """
     context = {
         "system": "Entitle",
-        "format": "entitle.entitlement.v1",
+        "format": ENTITLEMENT_CONTEXT_FORMAT,
         "product_id": product_id,
         "issuer_id": issuer_id,
         "subject_id": subject_id,
@@ -73,9 +72,9 @@ def make_drbg(seed, personalization):
     """
     Create the BSR DRBG instance.
 
-    BSR requires caller-provided seed material and personalization.
-    Its README states the DRBG expands caller-provided seed material and does
-    not create entropy by itself.
+    BSR requires caller-provided seed material and personalization. Its README
+    states the DRBG expands caller-provided seed material and does not create
+    entropy by itself.
     """
     return BrisartSecurityDRBG(
         seed=seed,
@@ -126,8 +125,8 @@ def open_entitlement_envelope(
     """
     Open and verify a protected entitlement envelope.
 
-    If the envelope was modified, malformed, encrypted for another context,
-    or authenticated fields changed, BSR should fail before Entitle receives
+    If the envelope was modified, malformed, encrypted for another context, or
+    authenticated fields changed, BSR should fail before Entitle receives
     plaintext.
     """
     context = make_context(

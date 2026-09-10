@@ -1,5 +1,4 @@
 from brisart_security_primitives import frame, sponge_hash
-
 MINIMUM_SEED_BYTES = 64
 MINIMUM_PERSONALIZATION_BYTES = 16
 MAX_REQUEST_BYTES = 1024 * 1024
@@ -13,7 +12,6 @@ class BrisartDRBGError(ValueError):
 
 class BrisartDRBG:
     """Fully custom deterministic research generator.
-
     This generator expands caller-provided seed material. It cannot create
     entropy. Its security cannot exceed the unpredictability of the seed.
     """

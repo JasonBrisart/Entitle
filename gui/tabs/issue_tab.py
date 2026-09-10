@@ -2,14 +2,13 @@
 Entitle GUI — Issue Tab
 
 Creates a protected offline entitlement container. Calls
-entitle.issue.issue_entitlement(...) directly -- the exact same function the
-`python main.py issue ...` CLI command uses.
+``entitle.issue.issue_entitlement(...)`` directly -- the exact same function the
+``python main.py issue ...`` CLI command uses.
 """
-
-
 from tkinter import ttk
 
 from entitle.issue import issue_entitlement
+from entitle.paths import default_new_entitlement_file
 from gui.widgets import FormFrame
 
 TAB_TITLE = "Issue"
@@ -35,7 +34,7 @@ def build(parent, app):
     form.add_entry(
         "output",
         "Output .entitle path",
-        default=str(app.repo_root / "entitlements" / "new.entitle"),
+        default=default_new_entitlement_file(),
         browse="save",
     )
 

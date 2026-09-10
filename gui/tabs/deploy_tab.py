@@ -2,15 +2,15 @@
 Entitle GUI — Deploy Tab
 
 Records a governed deployment against a protected entitlement file. Calls
-entitle.track.deploy_from_file(...) directly -- the exact same function the
-`python main.py track deploy ...` CLI command uses. Deployment is only
-recorded when the entitlement verifies, grants can_run, is not revoked, and
-its deployment_limit has not been reached.
+``entitle.tracking.deploy_from_file(...)`` directly -- the exact same function the
+``python main.py track deploy ...`` CLI command uses. Deployment is only recorded
+when the entitlement verifies, grants can_run, is not revoked, and its
+deployment_limit has not been reached.
 """
-
 from tkinter import ttk
 
-from entitle.track import deploy_from_file
+from entitle.tracking import deploy_from_file
+from entitle.paths import default_entitlement_file, default_record_store
 from gui.widgets import FormFrame
 
 TAB_TITLE = "Deploy"
@@ -25,7 +25,7 @@ def build(parent, app):
     form.add_entry(
         "entitlement_path",
         "Entitlement file",
-        default=str(app.repo_root / "entitlements" / "lab_a.entitle"),
+        default=default_entitlement_file(),
         browse="open",
     )
     form.add_entry("host", "Host / node ID")
@@ -34,7 +34,7 @@ def build(parent, app):
     form.add_entry(
         "store",
         "Record store file",
-        default=str(app.repo_root / "records" / "entitle_records.log"),
+        default=default_record_store(),
         browse="save",
     )
 

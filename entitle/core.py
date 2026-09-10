@@ -7,9 +7,10 @@ This module does not perform encryption directly.
 It expects protected entitlement containers to be opened through
 entitle.bsr_adapter.
 """
-
 import datetime
 import json
+
+ENTITLEMENT_FORMAT = "entitle.entitlement.v1"
 
 
 class EntitleError(Exception):
@@ -64,7 +65,7 @@ def make_entitlement_payload(
     metadata=None,
 ):
     return {
-        "format": "entitle.entitlement.v1",
+        "format": ENTITLEMENT_FORMAT,
         "issuer_id": issuer_id,
         "subject_id": subject_id,
         "product_id": product_id,
@@ -122,7 +123,7 @@ class EntitlementResult:
 
 
 def evaluate_payload(payload, expected_product_id=None):
-    if payload.get("format") != "entitle.entitlement.v1":
+    if payload.get("format") != ENTITLEMENT_FORMAT:
         return EntitlementResult.denied_result("unsupported_entitlement_format", payload)
     if expected_product_id is not None:
         if payload.get("product_id") != expected_product_id:

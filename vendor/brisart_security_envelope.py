@@ -1,14 +1,11 @@
 """Versioned authenticated-envelope operations for experimental BSR2.
-
 Each encryption combines the caller-supplied deterministic generator with
 fresh operating-system entropy. This prevents recreation of the caller's DRBG
 state, by itself, from recreating the same salt, nonce, and keystream.
-
 This is defensive hardening, not a proof of cryptographic security. A complete
 machine snapshot that also reproduces the operating-system randomness state is
 outside what process-local Python code can guarantee against.
 """
-
 from brisart_security_entropy import BrisartEntropyError, system_entropy
 from brisart_security_primitives import (
     constant_time_equal,
@@ -20,7 +17,6 @@ from brisart_security_primitives import (
     stream_bytes,
     xor_bytes,
 )
-
 ALGORITHM = "BSR2-ARX-SPONGE-ETM"
 VERSION = 2
 SALT_BYTES = 32
@@ -28,7 +24,6 @@ NONCE_BYTES = 32
 TAG_BYTES = 32
 MAX_CONTEXT_BYTES = 4096
 MAX_PLAINTEXT_BYTES = 16 * 1024 * 1024
-
 _EXPECTED_FIELDS = {
     "algorithm",
     "version",
@@ -113,7 +108,6 @@ def _fresh_entropy(length: int, name: str) -> bytes:
 
 def _diversify(generator_value: bytes, name: str) -> bytes:
     """XOR deterministic generator output with independent fresh entropy.
-
     If either same-length input is uniformly unpredictable and independent,
     the XOR result remains uniformly unpredictable. The implementation does
     not claim to validate either source.

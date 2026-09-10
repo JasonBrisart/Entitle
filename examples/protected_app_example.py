@@ -14,13 +14,12 @@ Behavior:
 Run this from anywhere:
     python examples/protected_app_example.py
 """
-
 import sys
 from pathlib import Path
 
-# Allow this script to be run directly (e.g. `python examples/protected_app_example.py`)
-# regardless of the current working directory, by putting the repository root
-# on sys.path so `entitle` (and, via entitle.bootstrap, `bsr/`) can be found.
+# Allow this script to be run directly (e.g. ``python examples/protected_app_example.py``)
+# regardless of the current working directory, by putting the repository root on
+# sys.path so ``entitle`` (and, via entitle.bootstrap, ``vendor/``) can be found.
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
@@ -44,8 +43,8 @@ For real internal deployments:
     - Keep issuer-side keys controlled.
     - Do not put sensitive master keys in public repositories.
 
-Because BrisartSecurityResearch is experimental research software, this should
-be treated as controlled-environment entitlement protection unless reviewed.
+Because BrisartSecurityResearch is experimental research software, this should be
+treated as controlled-environment entitlement protection unless reviewed.
 """
 MASTER_KEY = b"change-this-master-key-change-this-master-key"
 
@@ -109,17 +108,21 @@ def main():
         print("      --modify --fork --deployment-limit 3 \\")
         print(f"      --output {ENTITLEMENT_FILE}")
         return
+
     entitlement = load_entitlement()
     print("Entitlement result:")
     print(entitlement.to_dict())
     print()
+
     base_program()
     print()
+
     if not entitlement.allowed:
         print("Entitlement verification failed.")
         print(f"Reason: {entitlement.reason}")
         print("Governed features remain locked.")
         return
+
     guarded_features = [
         ("Enterprise", enterprise_feature),
         ("Modification", modify_feature),

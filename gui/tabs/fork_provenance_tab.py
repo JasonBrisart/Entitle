@@ -2,15 +2,15 @@
 Entitle GUI — Fork / Provenance Tab
 
 Records internal forks and provenance/ownership entries in the tamper-evident
-record store. Calls entitle.track.record_fork(...) and
-entitle.track.record_provenance(...) directly -- the same functions the
-`python main.py track fork ...` and `python main.py track provenance ...`
-CLI commands use.
+record store. Calls ``entitle.tracking.record_fork(...)`` and
+``entitle.tracking.record_provenance(...)`` directly -- the same functions the
+``python main.py track fork ...`` and ``python main.py track provenance ...`` CLI
+commands use.
 """
-
 from tkinter import ttk
 
-from entitle.track import record_fork, record_provenance
+from entitle.tracking import record_fork, record_provenance
+from entitle.paths import default_record_store
 from gui.widgets import FormFrame
 
 TAB_TITLE = "Fork / Provenance"
@@ -29,7 +29,7 @@ def build(parent, app):
     form.add_entry(
         "store",
         "Record store file",
-        default=str(app.repo_root / "records" / "entitle_records.log"),
+        default=default_record_store(),
         browse="save",
     )
 

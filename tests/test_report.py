@@ -1,6 +1,6 @@
 from entitle.records import RecordStore
 from entitle.report import build_report, build_report_for_path, format_text
-from entitle.track import record_fork, register_deployment
+from entitle.tracking import record_fork, register_deployment
 from entitle.core import EntitlementResult
 
 
@@ -27,7 +27,6 @@ class TestBuildReport:
         register_deployment(store, entitlement, host="node-1")
         register_deployment(store, entitlement, host="node-2")
         record_fork(store=store_path, product="EntitleDemo", source_version="1.0", fork_name="f", maintainer="m")
-
         report = build_report(store)
         assert report["counts_by_type"]["deployment"] == 2
         assert report["counts_by_type"]["fork"] == 1

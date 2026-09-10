@@ -1,16 +1,16 @@
 """
 Entitle GUI — Revoke / Reinstate Tab
 
-Revokes, reinstates, or checks the revocation status of an entitlement.
-Calls entitle.revoke.revoke(...), entitle.revoke.reinstate(...), and
-entitle.revoke.revocation_status(...) directly -- the same functions the
-`python main.py revoke ...` CLI subcommands use.
+Revokes, reinstates, or checks the revocation status of an entitlement. Calls
+``entitle.revoke.revoke(...)``, ``entitle.revoke.reinstate(...)``, and
+``entitle.revoke.revocation_status(...)`` directly -- the same functions the
+``python main.py revoke ...`` CLI subcommands use.
 """
-
 from tkinter import ttk
 
 from entitle.records import RecordStore
 from entitle.revoke import reinstate, revocation_status, revoke
+from entitle.paths import default_record_store
 from gui.widgets import FormFrame
 
 TAB_TITLE = "Revoke / Reinstate"
@@ -25,7 +25,7 @@ def build(parent, app):
     form.add_entry(
         "store",
         "Record store file",
-        default=str(app.repo_root / "records" / "entitle_records.log"),
+        default=default_record_store(),
         browse="save",
     )
 

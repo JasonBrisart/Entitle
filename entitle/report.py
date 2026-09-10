@@ -3,41 +3,36 @@ Entitle Report
 
 Audit and reporting for the Entitle record store.
 
-Generates a governance report over deployments, forks, and provenance
-records, and verifies the tamper-evident hash chain so you can confirm the
-log has not been edited, truncated, or reordered.
+Generates a governance report over deployments, forks, and provenance records,
+and verifies the tamper-evident hash chain so you can confirm the log has not
+been edited, truncated, or reordered.
 
 Example:
     python main.py report --store records/entitle_records.log
 """
-
 import argparse
 import json
 from pathlib import Path
 
-from .constants import RECORD_TYPE_DEPLOYMENT
+from .record_types import RECORD_TYPE_DEPLOYMENT
 from .records import RecordStore
 
 
 def build_report(store):
     records = store.read_all()
     chain = store.verify_chain()
-
     counts = {}
     for record in records:
         record_type = record.get("record_type", "unknown")
         counts[record_type] = counts.get(record_type, 0) + 1
-
     deployments_by_product = {}
     for record in store.filter(record_type=RECORD_TYPE_DEPLOYMENT):
         product_id = record.get("data", {}).get("product_id", "unknown")
         deployments_by_product[product_id] = (
             deployments_by_product.get(product_id, 0) + 1
         )
-
     first_created = records[0]["created_at"] if records else None
     last_created = records[-1]["created_at"] if records else None
-
     return {
         "store": str(store.path),
         "record_count": len(records),
@@ -114,14 +109,11 @@ def build_parser():
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-
     report = build_report_for_path(args.store)
-
     if args.format == "json":
         rendered = json.dumps(report, indent=2, ensure_ascii=False)
     else:
         rendered = format_text(report)
-
     if args.output:
         path = Path(args.output)
         path.parent.mkdir(parents=True, exist_ok=True)

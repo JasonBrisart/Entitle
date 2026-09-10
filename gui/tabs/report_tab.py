@@ -1,15 +1,15 @@
 """
 Entitle GUI — Audit Report Tab
 
-Builds an audit report over the tamper-evident record store, including hash
-chain verification. Calls entitle.report.build_report_for_path(...) and
-entitle.report.format_text(...) directly -- the same functions the
-`python main.py report ...` CLI command uses.
+Builds an audit report over the tamper-evident record store, including hash chain
+verification. Calls ``entitle.report.build_report_for_path(...)`` and
+``entitle.report.format_text(...)`` directly -- the same functions the
+``python main.py report ...`` CLI command uses.
 """
-
 from tkinter import ttk
 
 from entitle.report import build_report_for_path, format_text
+from entitle.paths import default_record_store
 from gui.widgets import FormFrame
 
 TAB_TITLE = "Audit Report"
@@ -20,7 +20,7 @@ def build(parent, app):
     form.add_entry(
         "store",
         "Record store file",
-        default=str(app.repo_root / "records" / "entitle_records.log"),
+        default=default_record_store(),
         browse="open",
     )
 

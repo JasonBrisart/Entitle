@@ -1,6 +1,6 @@
 import json
 
-from entitle.records import GENESIS_HASH, RecordStore
+from entitle.records import GENESIS_HASH, RECORD_FORMAT, RecordStore
 
 
 class TestRecordStoreBasics:
@@ -19,12 +19,18 @@ class TestRecordStoreBasics:
     def test_append_returns_record_with_expected_fields(self, store_path):
         store = RecordStore(store_path)
         record = store.append("fork", {"fork_name": "custom"})
+        assert record["format"] == RECORD_FORMAT
         assert record["record_type"] == "fork"
         assert record["data"] == {"fork_name": "custom"}
         assert record["prev_hash"] == GENESIS_HASH
         assert "entry_hash" in record
         assert "record_id" in record
         assert "created_at" in record
+
+    def test_record_format_marker_is_present_and_versioned(self, store_path):
+        store = RecordStore(store_path)
+        record = store.append("fork", {"a": 1})
+        assert record["format"] == "entitle.record.v1"
 
     def test_each_line_is_valid_json(self, store_path):
         store = RecordStore(store_path)
@@ -91,7 +97,6 @@ class TestVerifyChain:
         store.append("fork", {"a": 1})
         store.append("fork", {"a": 2})
         store.append("fork", {"a": 3})
-
         lines = store_path.read_text(encoding="utf-8").strip().split("\n")
         records = [json.loads(line) for line in lines]
         # Tamper with the middle record's data without recomputing its hash.
@@ -100,7 +105,6 @@ class TestVerifyChain:
             "\n".join(json.dumps(r, sort_keys=True) for r in records) + "\n",
             encoding="utf-8",
         )
-
         status = store.verify_chain()
         assert status.valid is False
         assert status.broken_index == 1
@@ -111,7 +115,6 @@ class TestVerifyChain:
         store.append("fork", {"a": 1})
         store.append("fork", {"a": 2})
         store.append("fork", {"a": 3})
-
         lines = store_path.read_text(encoding="utf-8").strip().split("\n")
         records = [json.loads(line) for line in lines]
         del records[1]  # remove the middle record; later prev_hash no longer matches
@@ -119,7 +122,6 @@ class TestVerifyChain:
             "\n".join(json.dumps(r, sort_keys=True) for r in records) + "\n",
             encoding="utf-8",
         )
-
         status = store.verify_chain()
         assert status.valid is False
         assert status.reason == "prev_hash_mismatch"
@@ -128,7 +130,6 @@ class TestVerifyChain:
         store = RecordStore(store_path)
         store.append("fork", {"a": 1})
         store.append("fork", {"a": 2})
-
         lines = store_path.read_text(encoding="utf-8").strip().split("\n")
         records = [json.loads(line) for line in lines]
         records.reverse()
@@ -136,7 +137,6 @@ class TestVerifyChain:
             "\n".join(json.dumps(r, sort_keys=True) for r in records) + "\n",
             encoding="utf-8",
         )
-
         status = store.verify_chain()
         assert status.valid is False
         assert status.broken_index == 0

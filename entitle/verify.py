@@ -4,14 +4,13 @@ Entitle Verify Tool
 Verifies a protected Entitle entitlement container.
 
 Example:
-    python main.py verify \
-        --issuer JasonBrisart \
-        --subject ResearchLabA \
-        --product EntitleDemo \
-        --master-key "change-this-master-key-change-this-master-key" \
+    python main.py verify \\
+        --issuer JasonBrisart \\
+        --subject ResearchLabA \\
+        --product EntitleDemo \\
+        --master-key "change-this-master-key-change-this-master-key" \\
         --file entitlements/lab_a.entitle
 """
-
 import argparse
 import json
 
@@ -26,8 +25,8 @@ def verify_entitlement(*, issuer, subject, product, master_key, file):
     """
     Verify a protected entitlement container.
 
-    Single source of truth for "verify an entitlement" — used by both the
-    CLI below and the GUI.
+    Single source of truth for "verify an entitlement" — used by both the CLI
+    below and the GUI.
 
     Returns an EntitlementResult.
     """

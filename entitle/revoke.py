@@ -3,26 +3,25 @@ Entitle Revoke
 
 Offline revocation for Entitle entitlements.
 
-Revocation is recorded as an append-only, tamper-evident entry in the same
-local record store used by deployment/fork/provenance tracking. Because the
-store is hash-chained, a revocation cannot be silently removed or reordered
-without breaking the chain.
+Revocation is recorded as an append-only, tamper-evident entry in the same local
+record store used by deployment/fork/provenance tracking. Because the store is
+hash-chained, a revocation cannot be silently removed or reordered without
+breaking the chain.
 
-An entitlement is considered revoked if the store contains a "revocation"
-record for its entitlement_id that is not followed by a later "reinstatement"
-record for the same entitlement_id. This lets you both revoke and, if needed,
-reinstate, while preserving the full history.
+An entitlement is considered revoked if the store contains a "revocation" record
+for its entitlement_id that is not followed by a later "reinstatement" record for
+the same entitlement_id. This lets you both revoke and, if needed, reinstate,
+while preserving the full history.
 
 Example:
-    python main.py revoke revoke --entitlement-id lab-a-demo-001 \
-        --issuer JasonBrisart --product EntitleDemo --reason "key compromise" \
+    python main.py revoke revoke --entitlement-id lab-a-demo-001 \\
+        --issuer JasonBrisart --product EntitleDemo --reason "key compromise" \\
         --store records/entitle_records.log
 """
-
 import argparse
 import json
 
-from .constants import RECORD_TYPE_REINSTATEMENT, RECORD_TYPE_REVOCATION
+from .record_types import RECORD_TYPE_REINSTATEMENT, RECORD_TYPE_REVOCATION
 from .records import RecordStore
 
 
@@ -30,8 +29,8 @@ def revocation_status(store, entitlement_id):
     """
     Return the effective revocation status for an entitlement_id.
 
-    Walks the record log in order. The most recent revocation or
-    reinstatement record for this entitlement_id wins.
+    Walks the record log in order. The most recent revocation or reinstatement
+    record for this entitlement_id wins.
     """
     revoked = False
     last_record = None

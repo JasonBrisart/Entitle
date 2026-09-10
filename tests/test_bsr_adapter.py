@@ -11,7 +11,6 @@ from entitle.bsr_adapter import (
 )
 from entitle.core import make_entitlement_payload
 
-
 MASTER_KEY = b"change-this-master-key-change-this-master-key!"
 DRBG_SEED = b"a" * 64
 DRBG_PERSONALIZATION = b"EntitleTestPersonalization"
@@ -125,7 +124,6 @@ class TestFileRoundTrip:
         )
         out_path = tmp_path / "lab_a.entitle"
         save_protected_entitlement(envelope, out_path)
-
         result = verify_protected_entitlement(
             path=out_path,
             master_key=MASTER_KEY,
@@ -144,7 +142,6 @@ class TestFileRoundTrip:
         )
         out_path = tmp_path / "lab_a.entitle"
         save_protected_entitlement(envelope, out_path)
-
         wrong_key = b"wrong-key-wrong-key-wrong-key-wrong-key!!!!"
         result = verify_protected_entitlement(
             path=out_path,

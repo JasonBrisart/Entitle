@@ -1,35 +1,34 @@
 """
 Entitle GUI — Core Engine
 
-A minimal Tkinter front end for the core Entitle workflows: issue, verify,
-deploy, revoke/reinstate/check, and audit report.
+A minimal Tkinter front end for the core Entitle workflows: issue, verify, deploy,
+revoke/reinstate/check, and audit report.
 
 Architecture:
-    This module is intentionally thin. It builds the main window, a shared
-    output pane, and a notebook of tabs -- but it does not know *how* any
-    individual tab works. Each tab is a small, self-contained plug-in module
-    under gui/tabs/, and is registered explicitly in TAB_MODULES below.
+    This module is intentionally thin. It builds the main window, a shared output
+    pane, and a notebook of tabs -- but it does not know *how* any individual tab
+    works. Each tab is a small, self-contained plug-in module under gui/tabs/, and
+    is registered explicitly in TAB_MODULES below.
 
     To add a new tab:
         1. Create gui/tabs/my_new_tab.py with:
-             - a `TAB_TITLE` string
-             - a `build(parent, app) -> tkinter widget` function
+             - a ``TAB_TITLE`` string
+             - a ``build(parent, app) -> tkinter widget`` function
         2. Import it and add it to TAB_MODULES below.
+
     No other file needs to change.
 
-    Every tab calls directly into the same `entitle.*` functions used by the
-    CLI in main.py, so the CLI and the GUI can never drift out of sync with
-    each other.
+    Every tab calls directly into the same ``entitle.*`` functions used by the CLI
+    in main.py, so the CLI and the GUI can never drift out of sync with each other.
 
-Requires only the Python standard library (tkinter ships with the standard
-CPython installer on Windows, macOS, and most Linux distributions).
+Requires only the Python standard library (tkinter ships with the standard CPython
+installer on Windows, macOS, and most Linux distributions).
 
 Launch with:
     python main.py gui
 or directly:
     python gui/app.py
 """
-
 import json
 import sys
 import tkinter as tk
@@ -70,9 +69,8 @@ class EntitleApp(tk.Tk):
         self.title("Entitle — Software Rights Management")
         self.geometry("880x640")
         self.minsize(760, 560)
-
-        # Exposed so tab plug-ins can build sensible default paths without
-        # needing to know how the app was launched or where it lives.
+        # Exposed so tab plug-ins can build sensible default paths without needing
+        # to know how the app was launched or where it lives.
         self.repo_root = _REPO_ROOT
 
         notebook = ttk.Notebook(self)
@@ -86,7 +84,6 @@ class EntitleApp(tk.Tk):
             notebook.add(frame, text=module.TAB_TITLE)
 
     # ---- shared output API used by every tab plug-in --------------------------
-
     def show_text(self, text):
         self.output.configure(state="normal")
         self.output.delete("1.0", "end")

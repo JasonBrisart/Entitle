@@ -4,23 +4,22 @@ Entitle Issue Tool
 Creates a protected offline entitlement container.
 
 This module exposes:
-    - `issue_entitlement(...)` — the plain function used by both the CLI
-      below and (in a later release) the GUI. It builds an Entitle payload,
-      protects it through BSR2, and saves the resulting container.
-    - `build_parser()` / `main(argv=None)` — the CLI wrapper around it.
+    - ``issue_entitlement(...)`` — the plain function used by both the CLI below
+      and the GUI. It builds an Entitle payload, protects it through BSR2, and
+      saves the resulting container.
+    - ``build_parser()`` / ``main(argv=None)`` — the CLI wrapper around it.
 
 Example:
-    python main.py issue \
-        --issuer JasonBrisart \
-        --subject ResearchLabA \
-        --product EntitleDemo \
-        --entitlement-id lab-a-demo-001 \
-        --master-key "change-this-master-key-change-this-master-key" \
-        --drbg-seed "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
-        --drbg-personalization "EntitleDemoPersonalization" \
+    python main.py issue \\
+        --issuer JasonBrisart \\
+        --subject ResearchLabA \\
+        --product EntitleDemo \\
+        --entitlement-id lab-a-demo-001 \\
+        --master-key "change-this-master-key-change-this-master-key" \\
+        --drbg-seed "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \\
+        --drbg-personalization "EntitleDemoPersonalization" \\
         --output entitlements/lab_a.entitle
 """
-
 import argparse
 import datetime
 import json
@@ -83,9 +82,9 @@ def issue_entitlement(
     """
     Build, protect, and save an Entitle entitlement container.
 
-    This is the single source of truth for "issue an entitlement" — used
-    directly by the CLI's `main()` below, and intended to be called
-    directly by the GUI as well, so both surfaces stay in sync.
+    This is the single source of truth for "issue an entitlement" — used directly
+    by the CLI's ``main()`` below, and called directly by the GUI as well, so both
+    surfaces stay in sync.
 
     Returns the plaintext payload dict (not the protected envelope).
     """

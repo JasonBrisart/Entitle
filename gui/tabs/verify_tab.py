@@ -2,13 +2,13 @@
 Entitle GUI — Verify Tab
 
 Verifies a protected entitlement container. Calls
-entitle.verify.verify_entitlement(...) directly -- the exact same function
-the `python main.py verify ...` CLI command uses.
+``entitle.verify.verify_entitlement(...)`` directly -- the exact same function
+the ``python main.py verify ...`` CLI command uses.
 """
-
 from tkinter import ttk
 
 from entitle.verify import verify_entitlement
+from entitle.paths import default_entitlement_file
 from gui.widgets import FormFrame
 
 TAB_TITLE = "Verify"
@@ -23,7 +23,7 @@ def build(parent, app):
     form.add_entry(
         "file",
         "Entitlement file",
-        default=str(app.repo_root / "entitlements" / "lab_a.entitle"),
+        default=default_entitlement_file(),
         browse="open",
     )
 

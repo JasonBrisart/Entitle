@@ -5,7 +5,108 @@ local-first, offline, and air-gapped environments.
 
 ---
 
-## [0.3.1.1] - 2026-08-26
+## [0.4.0] - 2026-09-10
+
+An architecture and consistency release, not a behavior release. This entry
+covers a full internal reorganization of the project layout, naming, and
+runtime-data hygiene brought up to parity with the rest of the Brisart
+ecosystem. No entitlement format changed, no BSR2 protection logic changed,
+and every existing CLI command still does exactly what it did in 0.3.x. If
+you only use `main.py issue/verify/track/revoke/report`, nothing about how
+you invoke Entitle changes in this release.
+
+### Changed
+
+- **Renamed `bsr/` to `vendor/`.** This is the same directory containing the
+  four unmodified BrisartSecurityResearch (BSR2) modules; only the folder
+  name changed, to match the naming convention used across the rest of the
+  Brisart ecosystem. `entitle/bootstrap.py`'s `VENDOR_DIR` now points at the
+  renamed directory.
+- **Moved the version string to a root-level `version.py`.** Previously
+  `__version__` lived inside `entitle/__init__.py`. It now lives in a
+  standalone `version.py` at the repository root, which `entitle/__init__.py`
+  and `main.py --version` both import from, so the package, the CLI, and any
+  future packaging or release tooling read the version from exactly one
+  place.
+- **Renamed `entitle/constants.py` to `entitle/record_types.py`.** The module
+  only ever held the five `record_type` string constants; the new name
+  documents that directly.
+- **Split `entitle/track.py` into an `entitle/tracking/` package.** The
+  276-line module previously mixed governed deployment recording (which
+  checks entitlement rights, deployment limits, and revocation status)
+  together with purely documentary fork and provenance recording. It is now:
+  - `tracking/deploy.py` — `register_deployment()`, `deploy_from_file()`,
+    `count_deployments()`
+  - `tracking/fork.py` — `record_fork()`
+  - `tracking/provenance.py` — `record_provenance()`
+  - `tracking/query.py` — `list_records()`
+  - `tracking/cli.py` — the `track` subcommand group (`deploy`, `fork`,
+    `provenance`, `list`), dispatched from `main.py`
+
+  `tracking/__init__.py` re-exports every public function, so existing code
+  only needs to change `from entitle.track import ...` to
+  `from entitle.tracking import ...` — no function signatures changed.
+- **Added `entitle/paths.py`** as the single source of truth for default
+  runtime-data locations (`entitlements/`, `records/`, `reports/`) used to
+  pre-populate GUI fields. These defaults were previously duplicated as
+  literal path strings across several `gui/tabs/*.py` modules; a change to
+  one no longer risks drifting from the others. The CLI is unaffected: it
+  still requires an explicit `--store` on every command, by design.
+- **`gui/` and `gui/tabs/` are now explicit packages** (added `__init__.py`
+  to each), matching the rest of the project instead of relying on implicit
+  namespace-package behavior.
+
+### Fixed
+
+- **`.gitignore` did not exclude Entitle's own runtime-data directories.**
+  `entitlements/`, `records/`, and `reports/` — which hold issued entitlement
+  envelopes and the tamper-evident deployment/fork/provenance/revocation log
+  — were previously stageable and could have been committed the first time
+  the tool was run inside the repository. All three directories are now
+  explicitly ignored.
+- **Nothing enforced the "BSR2 is vendored byte-for-byte unmodified" claim.**
+  The changelog and documentation have always asserted this, but no test
+  verified it. Added `tests/test_bsr_integrity.py`, which pins the SHA-256 of
+  each of the four `vendor/brisart_security_*.py` files and fails CI if any
+  of them drift from the pinned hash, and fails if an unexpected fifth
+  `brisart_security_*.py` file appears in `vendor/` without a corresponding
+  pinned entry.
+- **Record entries had no schema version marker.** The entitlement *payload*
+  already carried `"format": "entitle.entitlement.v1"`, but individual
+  entries appended to the tamper-evident record log had no equivalent field.
+  Every record written by `RecordStore.append()` now includes
+  `"format": "entitle.record.v1"` inside the hashed region, so the on-disk
+  record schema can be evolved in the future while still being able to
+  recognize records written by this release.
+
+### Added
+
+- **CI matrix expanded to `ubuntu-latest`, `windows-latest`, and
+  `macos-latest`** (previously Ubuntu only), each against Python 3.10-3.12.
+  CI now also runs a full CLI lifecycle smoke test — issue, verify, track
+  deploy, revoke, report — against a live entitlement on every run, not just
+  the unit test suite.
+- **`tests/test_paths.py`** covering the new `entitle/paths.py` defaults and
+  confirming `entitle.__version__` matches the root `version.py` value.
+- 11 new regression tests overall (71 → 82), covering the record format
+  marker, the vendor integrity pins, and the new paths module.
+
+### Notes
+
+- This release contains no changes to the entitlement payload format
+  (`entitle.entitlement.v1`), the BSR2 envelope protocol, or any encryption,
+  authentication, or context-binding logic. Entitlements issued under 0.3.x
+  verify unchanged under 0.4.0.
+- If you have existing scripts or code importing `entitle.track` or
+  `entitle.constants` directly, update those imports to `entitle.tracking`
+  and `entitle.record_types` respectively; the functions and constants
+  themselves are unchanged.
+- No new external dependencies were introduced; the project remains pure
+  Python, standard-library only.
+
+---
+
+## [0.3.2] - 2026-08-26
 
 ### Changed
 - Removed the unused `from pathlib import Path` import from `gui/tabs/issue_tab.py`.
