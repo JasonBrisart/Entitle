@@ -5,7 +5,7 @@ local-first, offline, and air-gapped environments.
 
 ---
 
-## [0.3.1.1] - 2026-08-26
+## [0.3.2] - 2026-08-26
 
 ### Changed
 - Removed the unused `from pathlib import Path` import from `gui/tabs/issue_tab.py`.
